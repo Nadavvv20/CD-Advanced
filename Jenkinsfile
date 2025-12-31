@@ -50,7 +50,6 @@ pipeline {
                 echo 'Authenticating with ECR...'
                 sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REGISTRY_URL}'
                 echo 'Pushing the image to the ECR...'
-                sh "docker push ${REGISTRY_URL}/${REPO_NAME}:latest"
                 sh "docker push ${REGISTRY_URL}/${REPO_NAME}:${BUILD_NUMBER}"
             }
         }
