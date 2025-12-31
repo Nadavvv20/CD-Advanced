@@ -56,17 +56,17 @@ pipeline {
         }
         stage('Deploy to Production') {
             steps {
-                // שימוש ב-Credential שיצרנו
+                // וודא שה-ID כאן תואם למה שהגדרת ב-Jenkins Credentials
                 sshagent(['prod-server-ssh']) {
                     script {
-                        def PROD_SERVER_IP = "3.239.161.82" // שנה ל-IP של שרת ה-Prod שלך
+                        def PROD_SERVER_IP = "1.2.3.4" // ממליץ להעביר לבלוק environment למעלה
                         
                         echo "Deploying to Production Server: ${PROD_SERVER_IP}"
                         
-                        // פקודות שירוצו על שרת ה-PROD מרחוק
+                        // שימוש בגרשיים כפולים משולשים מאפשר להשתמש במשתני ה-environment של Jenkins
                         sh """
-                            ssh -o StrictHostKeyChecking=no ec2-user@${PROD_SERVER_IP} '
-                                # 1. התחברות ל-ECR בשרת ה-Prod
+                            ssh -o StrictHostKeyChecking=no ec2-user@${PROD_SERVER_IP} "
+                                # 1. התחברות ל-ECR (חייב IAM Role על שרת ה-Prod)
                                 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REGISTRY_URL}
                                 
                                 # 2. משיכת האימג החדש
@@ -77,11 +77,12 @@ pipeline {
                                 docker rm ${IMAGE_NAME} || true
                                 
                                 # 4. הרצת הקונטיינר החדש
+                                # שים לב: אנחנו ממפים את פורט 80 של השרת לפורט 5000 של ה-Flask
                                 docker run -d --name ${IMAGE_NAME} -p 80:5000 ${REGISTRY_URL}/${REPO_NAME}:latest
                                 
-                                # 5. ניקיון אימג'ים ישנים בשרת ה-Prod
+                                # 5. ניקיון אימג'ים ישנים
                                 docker image prune -f
-                            '
+                            "
                         """
                     }
                 }
