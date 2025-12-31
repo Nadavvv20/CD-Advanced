@@ -16,36 +16,35 @@ pipeline {
         }
         stage('Test') {
             steps {
-                echo 'Starting Smoke Test...'
-            
-            // 1. הרצת הקונטיינר בנפרד (בדיעבד -d) ומיפוי פורטים
-            // נותנים שם ייחודי כדי שנוכל לעצור אותו בקלות
-            sh "docker run -d --name flask-test-container -p 5000:5000 ${IMAGE_NAME}:${BUILD_NUMBER}"
-            
-            try {
-                // 2. המתנה קצרה כדי לוודא ש-Flask עלה (לפעמים לוקח שנייה-שתיים)
-                echo 'Waiting for Flask to boot...'
-                sleep 5 
-                
-                // 3. הבדיקה האמיתית: שליחת בקשת HTTP לכתובת השרת
-                // הפקודה curl -f מחזירה שגיאה אם הסטטוס הוא לא 200
-                echo 'Checking if the app is responsive...'
-                sh 'curl -f http://localhost:5000 || exit 1'
-                
-                echo 'Test Passed Successfully!'
-                
-            } catch (Exception e) {
-                echo "Test Failed: ${e.message}"
-                error "Application did not respond with 200 OK"
-            } finally {
-                // 4. ניקיון - תמיד עוצרים ומוחקים את הקונטיינר של הבדיקה, בין אם הצליח ובין אם נכשל
-                echo 'Cleaning up test container...'
-                sh 'docker stop flask-test-container || true'
-                sh 'docker rm flask-test-container || true'
-            }
-            
+                // כאן נכנס התיקון - הכל עטוף ב-script
+                script { 
+                    echo 'Starting Smoke Test...'
+                    
+                    // הרצת הקונטיינר בנפרד
+                    sh "docker run -d --name flask-test-container -p 5000:5000 ${IMAGE_NAME}:${BUILD_NUMBER}"
+                    
+                    try {
+                        echo 'Waiting for Flask to boot...'
+                        sleep 5 
+                        
+                        echo 'Checking if the app is responsive...'
+                        // שימוש ב-curl לבדיקת השרת
+                        sh 'curl -f http://localhost:5000 || exit 1'
+                        
+                        echo 'Test Passed Successfully!'
+                        
+                    } catch (Exception e) {
+                        echo "Test Failed: ${e.message}"
+                        error "Application did not respond with 200 OK"
+                    } finally {
+                        echo 'Cleaning up test container...'
+                        sh 'docker stop flask-test-container || true'
+                        sh 'docker rm flask-test-container || true'
+                    }
+                }
             }
         }
+        
         stage('Push') {
             steps {
                 echo 'Authenticating with ECR...'
