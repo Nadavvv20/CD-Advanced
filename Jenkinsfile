@@ -77,7 +77,7 @@ pipeline {
                                 
                                 # 4. הרצת הקונטיינר החדש
                                 # שים לב: אנחנו ממפים את פורט 80 של השרת לפורט 5000 של ה-Flask
-                                docker run -d --name ${IMAGE_NAME} -p 80:5000 ${REGISTRY_URL}/${REPO_NAME}:latest
+                                docker run -d --name ${IMAGE_NAME} -p 80:5000 ${REGISTRY_URL}/${REPO_NAME}:${BUILD_NUMBER}
                                 
                                 # 5. ניקיון אימג'ים ישנים
                                 docker image prune -f
