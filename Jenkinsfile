@@ -54,6 +54,39 @@ pipeline {
                 sh "docker push ${REGISTRY_URL}/${REPO_NAME}:${BUILD_NUMBER}"
             }
         }
+        stage('Deploy to Production') {
+            steps {
+                // שימוש ב-Credential שיצרנו
+                sshagent(['prod-server-ssh']) {
+                    script {
+                        def PROD_SERVER_IP = "3.239.161.82" // שנה ל-IP של שרת ה-Prod שלך
+                        
+                        echo "Deploying to Production Server: ${PROD_SERVER_IP}"
+                        
+                        // פקודות שירוצו על שרת ה-PROD מרחוק
+                        sh """
+                            ssh -o StrictHostKeyChecking=no ec2-user@${PROD_SERVER_IP} '
+                                # 1. התחברות ל-ECR בשרת ה-Prod
+                                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REGISTRY_URL}
+                                
+                                # 2. משיכת האימג החדש
+                                docker pull ${REGISTRY_URL}/${REPO_NAME}:latest
+                                
+                                # 3. עצירה והסרה של הקונטיינר הישן (אם קיים)
+                                docker stop ${IMAGE_NAME} || true
+                                docker rm ${IMAGE_NAME} || true
+                                
+                                # 4. הרצת הקונטיינר החדש
+                                docker run -d --name ${IMAGE_NAME} -p 80:5000 ${REGISTRY_URL}/${REPO_NAME}:latest
+                                
+                                # 5. ניקיון אימג'ים ישנים בשרת ה-Prod
+                                docker image prune -f
+                            '
+                        """
+                    }
+                }
+            }
+        }
     }
     post {
         always {
