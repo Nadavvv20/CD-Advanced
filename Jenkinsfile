@@ -59,7 +59,7 @@ pipeline {
                 // וודא שה-ID כאן תואם למה שהגדרת ב-Jenkins Credentials
                 sshagent(['prod-server-ssh']) {
                     script {
-                        def PROD_SERVER_IP = "1.2.3.4" // ממליץ להעביר לבלוק environment למעלה
+                        def PROD_SERVER_IP = "3.239.161.82" // ממליץ להעביר לבלוק environment למעלה
                         
                         echo "Deploying to Production Server: ${PROD_SERVER_IP}"
                         
