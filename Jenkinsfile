@@ -50,7 +50,7 @@ pipeline {
                 echo 'Authenticating with ECR...'
                 sh 'aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REGISTRY_URL}'
                 echo 'Pushing the image to the ECR...'
-                sh "docker push ${REGISTRY_URL}/${REPO_NAME}:latest"
+                sh "docker push ${REGISTRY_URL}/${REPO_NAME}:${BUILD_NUMBER}"
             }
         }
         stage('Deploy to Production') {
@@ -69,7 +69,7 @@ pipeline {
                                 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REGISTRY_URL}
                                 
                                 # 2. משיכת האימג החדש
-                                docker pull ${REGISTRY_URL}/${REPO_NAME}:latest
+                                docker pull ${REGISTRY_URL}/${REPO_NAME}:${BUILD_NUMBER}
                                 
                                 # 3. עצירה והסרה של הקונטיינר הישן (אם קיים)
                                 docker stop ${IMAGE_NAME} || true
